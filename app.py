@@ -21,7 +21,7 @@ df = load_data()
 st.title("☕ Afficionado Coffee Roasters")
 st.markdown("""
 This dashboard shows product performance for Afficionado Coffee Roasters.  
-It helps identify top-selling products, category contribution, and the relationship between quantity sold and revenue.
+It helps identify top-selling products, category contribution, and the relationship between "transaction_qty" sold and revenue.
 """)
 
 # Sidebar filters
@@ -51,12 +51,12 @@ col1, col2, col3, col4 = st.columns(4)
 total_Revenue = filtered_df["Revenue"].sum()
 total_products = filtered_df["product_detail"].nunique()
 avg_price = filtered_df["unit_price"].mean()
-total_quantity = filtered_df["transaction_qty"].sum()
+total_"transaction_qty" = filtered_df["transaction_qty"].sum()
 
 col1.metric("Total Revenue", f"${total_Revenue:,.0f}")
 col2.metric("Products", f"{total_products}")
 col3.metric("Avg Unit Price", f"${avg_price:.2f}")
-col4.metric("Total Quantity Sold", f"{total_quantity:,}")
+col4.metric("Total "transaction_qty" Sold", f"{total_"transaction_qty":,}")
 
 st.markdown("---")
 
@@ -94,7 +94,7 @@ with col2:
 st.subheader("Popularity vs Revenue")
 
 scatter_data = filtered_df.groupby("product_detail").agg({
-    "quantity": "sum",
+    ""transaction_qty"": "sum",
     "Revenue": "sum"
 }).reset_index()
 
@@ -103,7 +103,7 @@ scatter_data = scatter_data.nlargest(50, "Revenue")
 
 fig3 = px.scatter(
     scatter_data,
-    x="quantity",
+    x=""transaction_qty"",
     y="Revenue",
     size="Revenue",
     hover_name="product_detail",
@@ -119,7 +119,7 @@ fig3.update_traces(
 )
 
 fig3.update_layout(
-    xaxis_title="Quantity Sold",
+    xaxis_title=""transaction_qty" Sold",
     yaxis_title="Revenue",
     showlegend=False
 )
