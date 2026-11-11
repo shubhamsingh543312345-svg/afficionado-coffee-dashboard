@@ -2,12 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Page config
-st.set_page_config(
-    page_title="Afficionado Coffee Roasters",
-    page_icon="☕",
-    layout="wide"
-)
+st.set_page_config(page_title="Afficionado Coffee Dashboard", layout="wide")
 
 # Load data
 @st.cache_data
@@ -17,12 +12,7 @@ def load_data():
 
 df = load_data()
 
-# Title
-st.title("☕ Afficionado Coffee Roasters")
-st.markdown("""
-This dashboard shows product performance for Afficionado Coffee Roasters.  
-It helps identify top-selling products, category contribution, and the relationship between "transaction_qty" sold and revenue.
-""")
+st.title("Afficionado Coffee Roasters - Product Intelligence Dashboard")
 
 # Sidebar filters
 st.sidebar.header("Filters")
@@ -39,92 +29,115 @@ product_types = st.sidebar.multiselect(
     default=df["product_type"].unique()
 )
 
+locations = st.sidebar.multiselect(
+    "Store Location",
+    options=df["store_location"].unique(),
+    default=df["store_location"].unique()
+)
+
+top_n = st.sidebar.slider("Top N Products", min_value=5, max_value=30, value=10)
+
 # Filter data
 filtered_df = df[
     (df["product_category"].isin(categories)) &
-    (df["product_type"].isin(product_types))
+    (df["product_type"].isin(product_types)) &
+    (df["store_location"].isin(locations))
 ]
 
-# KPI Cards
-col1, col2, col3, col4 = st.columns(4)
-
-total_Revenue = filtered_df["Revenue"].sum()
-total_products = filtered_df["product_detail"].nunique()
-avg_price = filtered_df["unit_price"].mean()
+# KPIs
+total_revenue = filtered_df["Revenue"].sum()
 total_quantity = filtered_df["transaction_qty"].sum()
+total_products = filtered_df["product_detail"].nunique()
+avg_revenue = filtered_df["Revenue"].mean()
 
-col1.metric("Total Revenue", f"${total_Revenue:,.0f}")
-col2.metric("Products", f"{total_products}")
-col3.metric("Avg Unit Price", f"${avg_price:.2f}")
-col4.metric("Total Quantity Sold", f"{total_quantity:,}")
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total Revenue", f"${total_revenue:,.0f}")
+col2.metric("Total Quantity Sold", f"{total_quantity:,.0f}")
+col3.metric("Unique Products", f"{total_products}")
+col4.metric("Avg Revenue per Row", f"${avg_revenue:,.2f}")
 
 st.markdown("---")
 
-# Charts
-col1, col2 = st.columns(2)
+# Top Products by Revenue
+st.subheader(f"Top {top_n} Products by Revenue")
 
-with col1:
-    st.subheader("Top Products by Revenue")
-    top_products = filtered_df.groupby("product_detail")["Revenue"].sum().nlargest(15).reset_index()
-    fig1 = px.bar(
-        top_products,
-        x="Revenue",
-        y="product_detail",
-        orientation="h",
-        color="Revenue",
-        color_continuous_scale="Blues",
-        height=500
-    )
-    fig1.update_layout(showlegend=False, yaxis_title="", xaxis_title="Revenue")
-    st.plotly_chart(fig1, use_container_width=True)
+top_products = (
+    filtered_df.groupby("product_detail")["Revenue"]
+    .sum()
+    .sort_values(ascending=False)
+    .head(top_n)
+    .reset_index()
+)
 
-with col2:
-    st.subheader("Revenue by Category")
-    category_rev = filtered_df.groupby("product_category")["Revenue"].sum().reset_index()
-    fig2 = px.pie(
-        category_rev,
-        values="Revenue",
-        names="product_category",
-        hole=0.4,
-        height=500
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+fig_bar = px.bar(
+    top_products,
+    x="Revenue",
+    y="product_detail",
+    orientation="h",
+    title=f"Top {top_n} Products by Revenue",
+    labels={"product_detail": "Product", "Revenue": "Revenue ($)"}
+)
+fig_bar.update_layout(yaxis={"categoryorder": "total ascending"})
+st.plotly_chart(fig_bar, use_container_width=True)
 
-# Second row
+# Category Revenue
+st.subheader("Revenue by Category")
+
+category_rev = (
+    filtered_df.groupby("product_category")["Revenue"]
+    .sum()
+    .reset_index()
+)
+
+fig_pie = px.pie(
+    category_rev,
+    values="Revenue",
+    names="product_category",
+    hole=0.4,
+    title="Category Revenue Share"
+)
+st.plotly_chart(fig_pie, use_container_width=True)
+
+# Scatter: Quantity vs Revenue
 st.subheader("Popularity vs Revenue")
 
-scatter_data = filtered_df.groupby("product_detail").agg({
-    ""transaction_qty"": "sum",
-    "Revenue": "sum"
-}).reset_index()
+scatter_data = (
+    filtered_df.groupby("product_detail")
+    .agg({
+        "transaction_qty": "sum",
+        "Revenue": "sum"
+    })
+    .reset_index()
+)
 
-# Keep top products only
-scatter_data = scatter_data.nlargest(50, "Revenue")
-
-fig3 = px.scatter(
+fig_scatter = px.scatter(
     scatter_data,
-    x=""transaction_qty"",
+    x="transaction_qty",
     y="Revenue",
     size="Revenue",
-    hover_name="product_detail",
     color="Revenue",
-    color_continuous_scale="Blues",
-    height=550
+    hover_name="product_detail",
+    title="Quantity Sold vs Revenue",
+    labels={
+        "transaction_qty": "Total Quantity Sold",
+        "Revenue": "Total Revenue ($)"
+    }
+)
+st.plotly_chart(fig_scatter, use_container_width=True)
+
+# Product Performance Table
+st.subheader("Product Performance Table")
+
+table_data = (
+    filtered_df.groupby("product_detail")
+    .agg({
+        "transaction_qty": "sum",
+        "Revenue": "sum"
+    })
+    .reset_index()
+    .sort_values("Revenue", ascending=False)
 )
 
-fig3.update_traces(
-    textposition="top center",
-    textfont_size=1,          # Makes text invisible
-    marker=dict(line=dict(width=0.5, color="DarkSlateGrey"))
-)
+table_data["Revenue Share %"] = (table_data["Revenue"] / table_data["Revenue"].sum() * 100).round(2)
 
-fig3.update_layout(
-    xaxis_title=""transaction_qty" Sold",
-    yaxis_title="Revenue",
-    showlegend=False
-)
-
-st.plotly_chart(fig3, use_container_width=True)
-# Data table
-with st.expander("View Filtered Data"):
-    st.dataframe(filtered_df, use_container_width=True)
+st.dataframe(table_data, use_container_width=True)
