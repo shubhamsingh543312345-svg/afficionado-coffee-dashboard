@@ -48,12 +48,12 @@ filtered_df = df[
 # KPI Cards
 col1, col2, col3, col4 = st.columns(4)
 
-total_revenue = filtered_df["revenue"].sum()
+total_Revenue = filtered_df["Revenue"].sum()
 total_products = filtered_df["product_detail"].nunique()
 avg_price = filtered_df["unit_price"].mean()
 total_quantity = filtered_df["quantity"].sum()
 
-col1.metric("Total Revenue", f"${total_revenue:,.0f}")
+col1.metric("Total Revenue", f"${total_Revenue:,.0f}")
 col2.metric("Products", f"{total_products}")
 col3.metric("Avg Unit Price", f"${avg_price:.2f}")
 col4.metric("Total Quantity Sold", f"{total_quantity:,}")
@@ -65,13 +65,13 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Top Products by Revenue")
-    top_products = filtered_df.groupby("product_detail")["revenue"].sum().nlargest(15).reset_index()
+    top_products = filtered_df.groupby("product_detail")["Revenue"].sum().nlargest(15).reset_index()
     fig1 = px.bar(
         top_products,
-        x="revenue",
+        x="Revenue",
         y="product_detail",
         orientation="h",
-        color="revenue",
+        color="Revenue",
         color_continuous_scale="Blues",
         height=500
     )
@@ -80,10 +80,10 @@ with col1:
 
 with col2:
     st.subheader("Revenue by Category")
-    category_rev = filtered_df.groupby("product_category")["revenue"].sum().reset_index()
+    category_rev = filtered_df.groupby("product_category")["Revenue"].sum().reset_index()
     fig2 = px.pie(
         category_rev,
-        values="revenue",
+        values="Revenue",
         names="product_category",
         hole=0.4,
         height=500
@@ -95,19 +95,19 @@ st.subheader("Popularity vs Revenue")
 
 scatter_data = filtered_df.groupby("product_detail").agg({
     "quantity": "sum",
-    "revenue": "sum"
+    "Revenue": "sum"
 }).reset_index()
 
 # Keep top products only
-scatter_data = scatter_data.nlargest(50, "revenue")
+scatter_data = scatter_data.nlargest(50, "Revenue")
 
 fig3 = px.scatter(
     scatter_data,
     x="quantity",
-    y="revenue",
-    size="revenue",
+    y="Revenue",
+    size="Revenue",
     hover_name="product_detail",
-    color="revenue",
+    color="Revenue",
     color_continuous_scale="Blues",
     height=550
 )
