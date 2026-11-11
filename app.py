@@ -51,7 +51,7 @@ col1, col2, col3, col4 = st.columns(4)
 total_Revenue = filtered_df["Revenue"].sum()
 total_products = filtered_df["product_detail"].nunique()
 avg_price = filtered_df["unit_price"].mean()
-total_quantity = filtered_df["quantity"].sum()
+total_quantity = filtered_df["transaction_qty"].sum()
 
 col1.metric("Total Revenue", f"${total_Revenue:,.0f}")
 col2.metric("Products", f"{total_products}")
