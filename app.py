@@ -56,7 +56,7 @@ total_quantity = filtered_df["transaction_qty"].sum()
 col1.metric("Total Revenue", f"${total_Revenue:,.0f}")
 col2.metric("Products", f"{total_products}")
 col3.metric("Avg Unit Price", f"${avg_price:.2f}")
-col4.metric("Total "transaction_qty" Sold", f"{total_"transaction_qty":,}")
+col4.metric("Total Quantity Sold", f"{total_quantity:,}")
 
 st.markdown("---")
 
